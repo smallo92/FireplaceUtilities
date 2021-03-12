@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace FireplaceUtilities
 {
-    [BepInPlugin("smallo.mods.fireplaceutilities", "Fireplace Utilities", "1.0.0")]
+    [BepInPlugin("smallo.mods.fireplaceutilities", "Fireplace Utilities", "1.0.2")]
     [HarmonyPatch]
     class FireplaceUtilitiesPlugin : BaseUnityPlugin
     {
@@ -62,14 +62,16 @@ namespace FireplaceUtilities
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
         }
 
-        public static (Fireplace, bool) GetFireplaceIsUsable(Player player)
+        public static Fireplace GetAndCheckFireplace(Player player)
         {
-            Fireplace fireplace = player.GetHoverObject()?.GetComponentInParent<Fireplace>().GetComponent<ZNetView>().GetComponent<Fireplace>();
-            if (fireplace == null) return (fireplace, false);
-            if (!fireplace.IsBurning()) return (fireplace, false);
-            if (fireplace.m_wet) return (fireplace, false);
+            Fireplace fireplace = player.GetHoverObject()?.GetComponentInParent<Fireplace>();
+            if (fireplace == null) return null;
+            Fireplace fireNet = fireplace.GetComponent<ZNetView>().GetComponent<Fireplace>();
+            if (fireNet == null) return null;
+            if (!fireNet.IsBurning()) return null;
+            if (fireNet.m_wet) return null;
 
-            return (fireplace, true);
+            return fireNet;
         }
 
         [HarmonyPostfix]
@@ -125,8 +127,8 @@ namespace FireplaceUtilities
 
             if (keyPOCode && extinguishItems.Value)
             {
-                (Fireplace fireNet, bool fireIsUsable) = GetFireplaceIsUsable(player);
-                if (!fireIsUsable) return;
+                Fireplace fireNet = GetAndCheckFireplace(player);
+                if (fireNet == null) return;
 
                 float fuelAmount = Mathf.Floor(fireNet.m_nview.GetZDO().GetFloat("fuel"));
                 GameObject fuelPrefab = ZNetScene.instance.GetPrefab(fireNet.m_fuelItem.name);
@@ -144,8 +146,8 @@ namespace FireplaceUtilities
             {
                 if (keyBurnCode && Input.GetKeyDown((KeyCode)System.Enum.Parse(typeof(KeyCode), "Alpha" + i.ToString())) && burnItems.Value)
                 {
-                    (Fireplace fireNet, bool fireIsUsable) = GetFireplaceIsUsable(player);
-                    if (!fireIsUsable) return;
+                    Fireplace fireNet = GetAndCheckFireplace(player);
+                    if (fireNet == null) return;
 
                     if (!torchBurn.Value)
                     {

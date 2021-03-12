@@ -30,6 +30,9 @@ If you have any suggestions, feel free to let me know!
 
 ## Changelog
 
+#### v1.0.2;
+* Additional error checking for getting fireplaces
+
 #### v1.0.1;
 * Readme fix
 
